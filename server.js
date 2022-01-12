@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mongoose = require('mongoose');
+var ObjectID = require('mongodb').ObjectID;
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -14,6 +15,7 @@ mongoose.connect(MONGODB_URI, {
     useUnifiedTopology: true,
     useCreateIndex: true
 });
+var db = mongoose.connection;
 const app = express();
 app.use(bodyParser.json());
 app.post('/api/change-password', async (req, res) => {
@@ -89,21 +91,20 @@ app.post('/api/register', async (req, res) => {
     res.json({ status: 'ok' });
 });
 app.post('/api/orders', validateToken, async (req, res) => {
-    const { sender_name, sender_phone, sender_address, receiver_name, receiver_phone, receiver_address, item_desc, item_weight } = req.body;
-    const order_status = "Order picked up";
+    const { type, created_at, company, company_url, location, title, description, how_to_apply, company_logo } = req.body;
     try {
         const response = await Orders.create({
-            sender_name,
-            sender_phone,
-            sender_address,
-            receiver_name,
-            receiver_phone,
-            receiver_address,
-            item_desc,
-            item_weight,
-            order_status
+            type,
+            created_at,
+            company,
+            company_url,
+            location,
+            title,
+            description,
+            how_to_apply,
+            company_logo
         });
-        console.log('Orders created successfully, Tracking id: ', response._id);
+        console.log('positions created successfully, Tracking id: ', response._id);
     }
     catch (error) {
         if (error.code === 11000) {
@@ -118,6 +119,55 @@ app.get("/posts", validateToken, (req, res) => {
     console.log("Token is valid");
     console.log(req.user.username);
     res.send(`${req.user.username} successfully accessed post`);
+});
+app.get('/api/recruitment/positions/:order_id', validateToken, async (req, res) => {
+    const { order_id } = req.params;
+    console.log(JSON.stringify(order_id));
+    db.collection('positions').find({ "_id": new ObjectID(order_id) }).toArray((err, result) => {
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+        }
+    });
+}); /*
+db.collection('positions').find({ $and: [{ type: /`${test}`/i }, { description: /123/i }] }).toArray((err, result) => { */
+app.get('/home', function (req, res) {
+    const { type, description } = req.query;
+    console.log(type);
+    db.collection('positions').find({ $and: [{ type: { $regex: new RegExp(`${type}`), $options: "$i" } }, { description: { $regex: new RegExp(`${description}`), $options: "$i" } }] }).toArray((err, result) => {
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+        }
+    });
+});
+app.get('/api/recruitment/positions/:order_id', validateToken, async (req, res) => {
+    const { order_id } = req.params;
+    console.log(JSON.stringify(order_id));
+    db.collection('positions').find({ "_id": new ObjectID(order_id) }).toArray((err, result) => {
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+        }
+    });
+});
+app.get('/api/recruitment/positions.json', validateToken, async (req, res) => {
+    const { order_id } = req.params;
+    console.log(JSON.stringify(order_id));
+    db.collection('posistions').find().toArray((err, result) => {
+        if (!err) {
+            res.send(result);
+        }
+        else {
+            console.log(err);
+        }
+    });
 });
 function validateToken(req, res, next) {
     //get token from request header

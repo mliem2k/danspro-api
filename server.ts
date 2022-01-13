@@ -158,20 +158,9 @@ app.get("/posts", validateToken, (req, res) => {
 
 
 })
-app.get('/api/recruitment/positions/:order_id', validateToken, async (req, res) => {
-    const { order_id } = req.params;
-    console.log(JSON.stringify(order_id));
-    db.collection('positions').find({ "_id": new ObjectID(order_id) }).toArray((err, result) => {
-        if (!err) {
-            res.send(result);
-        }
-        else {
-            console.log(err);
-        }
-    });
-});/* 
+/* 
 db.collection('positions').find({ $and: [{ type: /`${test}`/i }, { description: /123/i }] }).toArray((err, result) => { */
-app.get('/home', function (req, res) {
+app.get('/api/recruitment/positions.json', function (req, res) {
     const {type,description} = req.query;
     console.log(type);
     db.collection('positions').find({ $and: [{ type: { $regex: new RegExp(`${type}`), $options: "$i" } }, { description: { $regex: new RegExp(`${description}`), $options: "$i" } }]}).toArray((err, result) => {
@@ -195,10 +184,8 @@ app.get('/api/recruitment/positions/:order_id', validateToken, async (req, res) 
         }
     });
 });
-app.get('/api/recruitment/positions.json', validateToken, async (req, res) => {
-    const { order_id } = req.params;
-    console.log(JSON.stringify(order_id));
-    db.collection('posistions').find().toArray((err, result) => {
+app.get('/api/recruitment/get-all/positions.json', validateToken, async (req, res) => {
+    db.collection('positions').find().toArray((err, result) => {
         if (!err) {
             res.send(result);
         }
